@@ -3,7 +3,7 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*' 
+      - 'v*'
 
 permissions:
   contents: write
@@ -13,10 +13,25 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1 
+      - name: Download Source via API
+        shell: powershell
+        run: |
+          $url = "https://github.com/${{ github.repository }}/archive/${{ github.ref_name }}.zip"
+          Invoke-WebRequest -Uri $url -OutFile "source.zip"
+          Expand-Archive -Path "source.zip" -DestinationPath "temp_extract"
+          
+          # Move files out of the nested folder that GitHub creates inside the zip
+          $nestedFolder = Get-ChildItem -Path "temp_extract" | Select-Object -First 1
+          Move-Item -Path "$($nestedFolder.FullName)\*" -Destination "." -Force
+          
+          # Clean up temporary archives
+          Remove-Item -Path "source.zip" -Force
+          Remove-Item -Path "temp_extract" -Recurse -Force
+
+
+      - name: Setup Node 24 Environment
+        run: echo "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true" >> $GITHUB_ENV
+        shell: bash
 
       - name: Setup Python
         uses: actions/setup-python@v5
