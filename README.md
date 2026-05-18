@@ -43,3 +43,16 @@ Important: If the extracted file shares the same name as one of your current sav
 
 ## Support
 If you run into issues or have questions, reach out on Discord: @toasterclan1.
+
+
+# RoadMap
+
+## By 25/05/2026
+
+- **New Features such as importing zips**
+
+- **Automatic File naming (in testing)**
+
+## By 01/06/20
+
+- **All Features Added, full release**

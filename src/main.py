@@ -104,8 +104,6 @@ save_info = extract_save_info(SAVE_FILE)
 
 
 class Application(Frame):
-    def say_hi(self):
-        print("Hi")
     
     def createWdigets(self):
         self.title = Label(self, text="Subnautica 2 Save Sharer", fg="white", bg="#241414")
@@ -133,21 +131,25 @@ class Application(Frame):
                 "Are you sure this is the file you want?\n\n" + info_text
             )
 
+
+
+            if not confirm:
+                return
+            
             tell_how = messagebox.showinfo(
                 "How to Share",
                 "After clicking OK, a zip file will be created in the selected folder. You can share this zip file with others.\n\nTo use the zip file, the reciver must extract the zip into their Subnautica 2 saves folder. (Usually located at C:\\Users\\[Username]\\AppData\\local\\Subnautica2\\Saved\\SaveGames) You may have to unhide hidden folders to see this appdata folder.\n\n Make sure to backup Your saves before extracting in-case of any iussues.\n\nMake sure the extracted files do NOT overide your own (e.g. savegame_0_1.sav should be renamed to savegame_5_1 for example)\n\nHave fun! (ask me questions on discord @toasterclan1)"
             )
-
-            if not confirm:
-                return
-
+            name = "_" + save_info["save_name"].replace(" ", "_") if save_info["save_name"] != "Unknown" else ""
+            date = "_" + save_info["last_modified"].replace(" ", "_").replace(":", "-") if save_info["last_modified"] != "Unknown" else ""
+            mode = "_" + save_info["gamemode"] if save_info["gamemode"] != "Unknown" else ""
             zip_path = os.path.join(
                 output_dir,
-                os.path.splitext(os.path.basename(SAVE_FILE))[0] + ".zip"
+                os.path.splitext(os.path.basename(SAVE_FILE))[0] + name + mode + date + ".zip"
             )
 
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                zipf.write(SAVE_FILE, os.path.basename(SAVE_FILE))
+                zipf.write(SAVE_FILE, os.path.basename(SAVE_FILE) + name + mode + date + ".sav")
 
             print(f"Saved {SAVE_FILE} to {zip_path}")
 
@@ -180,7 +182,8 @@ class Application(Frame):
         self.save = Button(self, text="Save to zip", command=save_to_zip)
         self.save.pack(side="top")
 
-
+        self.import_zip = Label(self, text="Soon...", fg="#383838", bg="#241414")
+        self.import_zip.pack({"side": "top"})
 
         self.save_info = Label(self, text="Info: N/A", fg="#383838", bg="#241414")
         self.save_info.pack({"side": "top"})
