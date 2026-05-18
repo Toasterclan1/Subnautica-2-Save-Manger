@@ -13,42 +13,44 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Download Source via API
-        shell: powershell
-        run: |
-          $url = "https://github.com/${{ github.repository }}/archive/${{ github.ref_name }}.zip"
-          Invoke-WebRequest -Uri $url -OutFile "source.zip"
-          Expand-Archive -Path "source.zip" -DestinationPath "temp_extract"
-          
-          $nestedFolder = Get-ChildItem -Path "temp_extract" | Select-Object -First 1
-          Move-Item -Path "$($nestedFolder.FullName)\*" -Destination "." -Force
-          
-          Remove-Item -Path "source.zip" -Force
-          Remove-Item -Path "temp_extract" -Recurse -Force
-
-
-      - name: Verify Directory Structure
-        shell: powershell
-        run: |
-          Get-ChildItem -Recurse
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install PyInstaller
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-pyinstaller
+          restore-keys: ${{ runner.os }}-pip-
+
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller
 
+      - name: Verify build files exist
+        shell: powershell
+        run: |
+          $files = @("src/main.py", "src/icon.ico")
+          foreach ($file in $files) {
+            if (-Not (Test-Path $file)) {
+              throw "Required file not found: $file"
+            }
+          }
+
       - name: Build Executable
         run: |
-          pyinstaller --onefile --noconsole --icon="src/icon.ico" --name="Subnautica2SaveSharer" src/main.py
+          pyinstaller --onefile --noconsole --add-data "src/icon.ico;src" --icon="src/icon.ico" --name="Subnautica2SaveSharer" src/main.py
 
       - name: Upload Release
         uses: softprops/action-gh-release@v2
         with:
           files: dist/Subnautica2SaveSharer.exe
+          body: "Release ${{ github.ref_name }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
